@@ -31,7 +31,7 @@ python manage.py runserver
 * **Website:** http://127.0.0.1:8000/
 * **Login Page:** http://127.0.0.1:8000/user/log
 * **Admin Panel:** http://127.0.0.1:8000/admin/
- Plz note this is just a local demo piece
+ Plz note this is just a local demo piece and it will be very laggy on cpu must have atleast 4gb gpu rtx 3050 !!
 
 ## 📧 Contact
 If you have any doubts or issues running the project, feel free to reach out:
