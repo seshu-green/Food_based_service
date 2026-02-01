@@ -12,7 +12,7 @@ Because the database is included, and its just a demo piece, you can log in imme
 2. **email** Lseshu3@gmail.com
 3. **name:** seshu
 4. **Password:** Lseeshu@201
-   **dob** 01 11 2006
+5.  **dob** 01 11 2006
 
 ### 1. Prerequisites
 * **Python 3.10+**
