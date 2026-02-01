@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Foodie</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { 
+            --bg: #0b0b0b; 
+            --card: #141414; 
+            --accent: #ffffff; 
+            --text-main: #ccc; 
+            --border: #1a1a1a; 
+            --text-dim: #555;
+        }
+        
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); 
+            color: #fff; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        header { 
+            height: 55px; 
+            padding: 0 25px; 
+            border-bottom: 1px solid var(--border); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-shrink: 0;
+        }
+
+        .user-display {
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .nav a { color: var(--text-dim); text-decoration: none; margin-left: 15px; font-size: 11px; text-transform: uppercase; }
+        .nav a:hover { color: #fff; }
+
+        main { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            width: 100%; 
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-row { display: flex; flex-direction: column; margin-bottom: 25px; width: 100%; }
+        
+        .question { 
+            align-self: flex-end; 
+            background: var(--card); 
+            padding: 12px 16px; 
+            border-radius: 14px 14px 2px 14px; 
+            max-width: 80%; 
+            border: 1px solid #222; 
+            font-size: 15px;
+        }
+
+        .uploaded-img { max-width: 200px; border-radius: 8px; margin-top: 8px; border: 1px solid #333; }
+
+        .bot-container { display: flex; gap: 15px; align-self: flex-start; width: 100%; margin-top: 10px; }
+        
+        .foodie-symbol { 
+            color: #fff;
+            font-weight: 700; 
+            font-size: 18px;
+            flex-shrink: 0; 
+        }
+
+        .answer { font-size: 16px; line-height: 1.7; color: var(--text-main); flex: 1; }
+        .answer b, .answer strong { color: #fff; font-weight: 700; }
+
+        .url-chips { 
+            margin-top: 15px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
+        .src-btn { 
+            color: #fff; 
+            text-decoration: none; 
+            font-size: 13px; 
+            background: #1a1a1a; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            border: 1px solid #333; 
+            display: flex;
+            align-items: center;
+        }
+
+        .bottom-bar { padding: 15px 20px 10px 20px; background: var(--bg); }
+        .input-container { 
+            max-width: 800px; margin: 0 auto; background: #1a1a1a; 
+            border-radius: 25px; padding: 5px 20px; border: 1px solid #222; 
+        }
+        
+        #preview-wrap { display: none; padding: 10px 0; }
+        #preview-img { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #333; }
+
+        form { display: flex; width: 100%; align-items: center; gap: 10px; }
+        .plus-label { font-size: 24px; color: white; cursor: pointer; padding-right: 5px; }
+        #id_prompt { 
+            flex: 1; background: transparent; border: none; 
+            color: #fff; outline: none; padding: 12px 5px; font-size: 16px; 
+        }
+        #send-btn { background: none; border: none; color:white; cursor: pointer; font-size: 18px; }
+
+        .footer-brand {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            padding: 10px 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        main::-webkit-scrollbar { width: 0px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="user-display">{{ user.email }}</div>
+    <div class="nav">
+        <a href="{% url 'flush' %}">Flush</a>
+        <a href="{% url 'bye' %}">Logout</a>
+    </div>
+</header>
+
+<main id="chat-window">
+    {% for msg in previous_chats %}
+    <div class="chat-row">
+        <div class="question">
+            {{ msg.prompt }}
+            {% if msg.image %}<br><img src="{{ msg.image.url }}" class="uploaded-img">{% endif %}
+        </div>
+        <div class="bot-container">
+            <div class="foodie-symbol">F</div>
+            <div class="answer">{{ msg.bot|safe }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</main>
+
+<div class="bottom-bar">
+    <div class="input-container">
+        <div id="preview-wrap"><img id="preview-img" src=""></div>
+        <form id="chat-form" autocomplete="off" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="id_image" class="plus-label">+</label>
+            <input type="file" name="image" id="id_image" style="display:none;" accept="image/*">
+            <input type="text" name="prompt" id="id_prompt" placeholder="Message..." required>
+            <button type="submit" id="send-btn">🔍︎</button>
+        </form>
+    </div>
+</div>
+<div class="footer-brand">Foodie @2025</div>
+
+<script>
+    const chatWindow = document.getElementById("chat-window");
+    const form = document.getElementById("chat-form");
+    const inputField = document.getElementById("id_prompt");
+    const imageField = document.getElementById("id_image");
+    const btn = document.getElementById("send-btn");
+    const previewWrap = document.getElementById("preview-wrap");
+    const previewImg = document.getElementById("preview-img");
+
+    const scroll = () => chatWindow.scrollTop = chatWindow.scrollHeight;
+    scroll();
+
+    imageField.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            previewImg.src = URL.createObjectURL(file);
+            previewWrap.style.display = "block";
+        }
+    };
+
+    function processContent(text) {
+        let parts = text.split("||URLS||");
+        let html = parts[0]
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+            .replace(/\n/g, '<br>');
+
+        if (parts[1]) {
+            try {
+                const urls = JSON.parse(parts[1]);
+                let chips = '<div class="url-chips">';
+                urls.forEach(u => {
+                    if (u.v && u.v !== "None") {
+                        chips += `<a href="${u.v}" target="_blank" class="src-btn">▶ Watch Video</a>`;
+                    }
+                    if (u.s && u.s !== "None") {
+                        chips += `<a href="${u.s}" target="_blank" class="src-btn">📖 Read Source</a>`;
+                    }
+                });
+                html += chips + '</div>';
+            } catch(e) {}
+        }
+        return html;
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const prompt = inputField.value.trim();
+        const file = imageField.files[0];
+        if (!prompt && !file) return;
+
+        btn.disabled = true;
+
+        let userHtml = `<div class="chat-row"><div class="question">${prompt}`;
+        if (file) userHtml += `<br><img src="${URL.createObjectURL(file)}" class="uploaded-img">`;
+        userHtml += `</div></div>`;
+        chatWindow.insertAdjacentHTML("beforeend", userHtml);
+
+        const botId = "bot-" + Date.now();
+        chatWindow.insertAdjacentHTML("beforeend", `<div class="chat-row"><div class="bot-container"><div class="foodie-symbol">F</div><div class="answer" id="${botId}">...</div></div></div>`);
+        
+        const box = document.getElementById(botId);
+        const formData = new FormData(form);
+        
+        inputField.value = "";
+        imageField.value = "";
+        previewWrap.style.display = "none";
+        scroll();
+
+        try {
+            const res = await fetch("/start_chat/", {
+                method: "POST",
+                body: formData,
+                headers: { "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value }
+            });
+
+            const { stream_url, payload } = await res.json();
+            const response = await fetch(stream_url, { 
+                method: "POST", 
+                headers: {"Content-Type":"application/json"}, 
+                body: JSON.stringify(payload) 
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = "";
+            box.innerHTML = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split("\n");
+                lines.forEach(line => {
+                    if (line.startsWith("data: ")) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            fullText += data.token;
+                            box.innerHTML = processContent(fullText);
+                            scroll();
+                        } catch(e) {}
+                    }
+                });
+            }
+
+            const hist = new FormData();
+            hist.append("prompt", prompt);
+            hist.append("bot", box.innerHTML);
+            if (file) hist.append("image", file);
+            await fetch("/save_chat_history/", { 
+                method: "POST", 
+                body: hist, 
+                headers: { "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value } 
+            });
+
+        } catch(e) {
+            box.innerHTML = "Connection Error.";
+        } finally {
+            btn.disabled = false;
+        }
+    };
+</script>
+</body>
+</html>
