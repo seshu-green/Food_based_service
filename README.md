@@ -11,7 +11,7 @@ Because the database is included, and its just a demo piece, you can log in imme
 1. **URL:** http://127.0.0.1:8000/user/log
 2. **email** Lseshu3@gmail.com
 3. **name:** seshu
-4. **Password:** LseeshuS@201
+4. **Password:** Lseeshu@201
    **dob** 01 11 2006
 
 ### 1. Prerequisites
